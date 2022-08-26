@@ -14,6 +14,6 @@ export class SongCommentService {
     let songMeta = await this.songMetaProxy.getMetaByYTBId(externalId)
 
     // 2. 使用 meta 信息请求相应网站的数据
-    this.songCommentCrawler.getCommentList(songMeta, externalId)
+    await this.songCommentCrawler.getCommentList(songMeta, externalId)
   }
 }

@@ -10,7 +10,7 @@ export class SongCommentController {
 
   @Get(':externalId')
   async getSongComment(@Param('externalId') externalId){
-    this.songCommentService.getComment(externalId)
+    await this.songCommentService.getComment(externalId)
     return externalId
   }
 }
