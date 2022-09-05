@@ -17,7 +17,6 @@ export class SongCommentCrawler {
       const geniusSearchUrl = `https://genius.com/search?q=${frontEndSongMeta.spotifyAlbum}`
       const browser = await puppeteer.launch({
         headless: false,   //有浏览器界面启动
-        timeout: 100000000,
       });
       const page = await browser.newPage();
       await page.setDefaultNavigationTimeout(0);

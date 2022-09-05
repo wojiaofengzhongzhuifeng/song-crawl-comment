@@ -8,6 +8,11 @@ export class SongCommentController {
     private readonly songCommentService: SongCommentService,
   ) {}
 
+  @Get("test")
+  getTest(){
+    return "jfkdlas"
+  }
+
   @Get(':externalId')
   async getSongComment(@Param('externalId') externalId){
     await this.songCommentService.getComment(externalId)

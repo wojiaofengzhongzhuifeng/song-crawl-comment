@@ -13,9 +13,9 @@ export class SongMetaProxy {
     let frontEndSongMeta: FrontEndSongMeta = { spotifyAlbum: '', spotifySong: '', spotifyArtists: [], }
     let requestUrl = `http://api.larkplayerapp.com/ms-map-seed-server/song-maps/external-id?externalId=youtube-${yid}`
     const response: AxiosResponse<BackEndSongMeta> = await this.httpService.axiosRef.get(requestUrl)
-    frontEndSongMeta.spotifySong = response.data.data.spotifySong || ''
-    frontEndSongMeta.spotifyAlbum = response.data.data.spotifyAlbum || ''
-    frontEndSongMeta.spotifyArtists = response.data.data.spotifyArtists
+    frontEndSongMeta.spotifySong = response?.data?.data?.spotifySong || ''
+    frontEndSongMeta.spotifyAlbum = response?.data?.data?.spotifyAlbum || ''
+    frontEndSongMeta.spotifyArtists = response?.data?.data?.spotifyArtists
     return frontEndSongMeta
   }
 }
