@@ -12,9 +12,12 @@ export class SongCommentCrawler {
     private readonly geniusLyricInfoProxy: GeniusLyricInfoProxy,
   ) {}
 
+  page = null
+
   async getCommentList(frontEndSongMeta: FrontEndSongMeta, externalId: string){
-    await this.getGeniusCommentListForTest(frontEndSongMeta)
+    let {aboutText, questionAndAnswerObjList, lyricAndCommentObjList} = await this.getGeniusCommentListForTest(frontEndSongMeta)
     this.getYTBCommentList(externalId)
+    return {genius: {aboutText, questionAndAnswerObjList, lyricAndCommentObjList}}
   }
 
   async getGeniusCommentList(frontEndSongMeta: FrontEndSongMeta){
@@ -63,112 +66,142 @@ export class SongCommentCrawler {
     }
   }
 
+  async initChrome(){
+    console.log("initChrome");
+    const browser = await puppeteer.launch({
+      headless: false,   //有浏览器界面启动
+    });
+    this.page = await browser.newPage();
+    await this.htmlOnly(this.page)
+    this.page.setDefaultNavigationTimeout(0);
+  }
+
+  async gotoPageSearchByAlbumName(frontEndSongMeta: FrontEndSongMeta){
+    console.log("gotoAlbumPage");
+    const geniusSearchUrl = `https://genius.com/search?q=${frontEndSongMeta.spotifyAlbum}`
+    await this.page.goto(geniusSearchUrl, {
+      timeout: 1000000,
+    });
+  }
+  async findMostMatchAlbumInPageSearchByAlbumName(){
+    // 在上一步的页面中，寻找 「tracking-event="Search Result Tap"」的dom，取第一个 dom，获取 dom 的链接，进入这个链接
+    return await this.page.evaluate(() => {
+      return document.querySelectorAll('[tracking-event="Search Result Tap"]')[0].querySelector('a').getAttribute('href')
+    })
+  }
+
+  async goToMostMatchAlbumPage(){
+    let songHref = await this.findMostMatchAlbumInPageSearchByAlbumName()
+    await this.page.goto(songHref);
+  }
+
+  async findMostMatchSongInAlbumPage(frontEndSongMeta){
+    // 选择当前歌曲列表中最接近的歌曲名称，进入该歌曲页面
+    return await this.page.evaluate((frontEndSongMeta) => {
+      let matchSongHref = ''
+      let songDomList = document.querySelectorAll('album-tracklist-row')
+      songDomList.forEach((item) => {
+        let songNameFromGenius = item.querySelector('h3').innerText
+        if (songNameFromGenius.includes(frontEndSongMeta.spotifySong)) {
+          // @ts-ignore
+          matchSongHref = item.querySelector("h3").parentElement.href
+        }
+      })
+      return matchSongHref
+    }, frontEndSongMeta)
+  }
+
+  async gotoMostMatchSongPage(frontEndSongMeta){
+    let matchSongHref = await this.findMostMatchSongInAlbumPage(frontEndSongMeta)
+    await this.page.goto(matchSongHref);
+  }
+
+  async getCommentDataFromSongPage(){
+    console.log("getCommentDataFromSongPage");
+    // 当前的 this.page 表示进入了歌曲详情页面
+    // 爬取以下数据
+    // 1. 爬取分词创作背景数据
+    // 2. 爬取 about 评论数据
+    // 3. 问答数据
+    // 4. 创作者相关信息 Credits （未完成，但是思路是读取 window.__PRELOADED_STATE__）
+    /*
+    * 1. 获取 className 为 jvutUp 的 dom
+    * 2. 获取 dom 的 a.href 的分词歌词 id
+    * 3. 将分词歌词 id 作为请求参数 ，得到结果https://genius.com/api/referents/${lyricId}?text_format=markdown
+    * 4.
+    * */
+    let {aboutText, questionAndAnswerObjList, lyricAndCommentObjList} = await this.page.evaluate(()=>{
+      let questionAndAnswerObjList: QuestionAndAnswer[] = []
+      let lyricAndCommentObjList: LyricAndComment[] = []
+      let aboutText = ""
+      document.querySelectorAll('.jvutUp').forEach((lyricDOM)=>{
+        if(!lyricDOM){return}
+        let lyricId = lyricDOM.getAttribute('href').split('/')[1]
+        // @ts-ignore
+        let lyricText = lyricDOM.innerText
+        if(!isNaN(parseInt(lyricId))){
+          lyricAndCommentObjList.push({
+            lyric: lyricText,
+            comment: lyricId
+          })
+        } else {
+          console.error("error parse url error ")
+        }
+      })
+      // @ts-ignore
+      let answerObj = window.__PRELOADED_STATE__.entities.answers
+      // @ts-ignore
+      let questionsObj = window.__PRELOADED_STATE__.entities.questions;
+      Object.keys(questionsObj).forEach((questionId)=>{
+        const questionItem = questionsObj[questionId]
+        const question = questionItem.body
+        const answerId = questionItem.answer
+        const answerItem = answerObj[answerId]
+        const answer = answerItem.body.markdown
+        const questionAndAnswer: QuestionAndAnswer = {
+          answer,
+          question
+        }
+        questionAndAnswerObjList.push(questionAndAnswer)
+      })
+
+      const aboutDOM = document.querySelector('[class*="SongDescription"] [class*="RichText__Container"]');
+      aboutText = aboutDOM?.innerHTML || ''
+      return {aboutText, questionAndAnswerObjList, lyricAndCommentObjList}
+    })
+
+    let promiseList = []
+    lyricAndCommentObjList.forEach((lyricAndCommentObj)=>{
+      let promise = this.geniusLyricInfoProxy.getCommentOnBackgroundOfWordSegmentation(lyricAndCommentObj.comment)
+      promiseList.push(promise)
+    })
+    let lyricCommentList = await Promise.all(promiseList).then((responseList)=>{
+      return responseList
+    })
+    lyricAndCommentObjList.forEach((lyricAndCommentObj, index )=>{
+      lyricAndCommentObj.comment = lyricCommentList[index]
+    })
+    return {aboutText, questionAndAnswerObjList, lyricAndCommentObjList}
+  }
+
 
   async getGeniusCommentListForTest(frontEndSongMeta: FrontEndSongMeta){
     try{
-      const geniusSearchUrl = `https://genius.com/search?q=${frontEndSongMeta.spotifyAlbum}`
-      const browser = await puppeteer.launch({
-        headless: false,   //有浏览器界面启动
-      });
-      const page = await browser.newPage();
-      await this.htmlOnly(page)
-      await page.setDefaultNavigationTimeout(0);
-      await page.goto(geniusSearchUrl, {
-        timeout: 1000000,
-      });
-
-      // 在上一步的页面中，寻找 「tracking-event="Search Result Tap"」的dom，取第一个 dom，获取 dom 的链接，进入这个链接
-      let albumHref = await page.evaluate(() => {
-        const albumHref = document.querySelectorAll('[tracking-event="Search Result Tap"]')[0].querySelector('a').getAttribute('href')
-        return albumHref
-      });
-      await page.goto(albumHref);
-
-      // 选择当前歌曲列表中最接近的歌曲名称，进入该歌曲页面
-      let matchSongHref = await page.evaluate((frontEndSongMeta) => {
-        let matchSongHref = ''
-        let songDomList = document.querySelectorAll('album-tracklist-row')
-        songDomList.forEach((item)=>{
-          let songNameFromGenius = item.querySelector('h3').innerText
-          if(songNameFromGenius.includes(frontEndSongMeta.spotifySong)){
-            // @ts-ignore
-            matchSongHref = item.querySelector("h3").parentElement.href
-          }
-        })
-        return matchSongHref
-      }, frontEndSongMeta);
-      await page.goto(matchSongHref);
+      await this.initChrome()
+      await this.gotoPageSearchByAlbumName(frontEndSongMeta)
+      await this.goToMostMatchAlbumPage()
+      await this.gotoMostMatchSongPage(frontEndSongMeta)
 
       // 正式进入歌曲页面
-
-      // 爬取以下数据
-      // 1. 爬取分词创作背景数据
-      // 2. 爬取 about 评论数据
-      // 3. 问答数据
-      // 4. 创作者相关信息 Credits （未完成，但是思路是读取 window.__PRELOADED_STATE__）
-      /*
-      * 1. 获取 className 为 jvutUp 的 dom
-      * 2. 获取 dom 的 a.href 的分词歌词 id
-      * 3. 将分词歌词 id 作为请求参数 ，得到结果https://genius.com/api/referents/${lyricId}?text_format=markdown
-      * 4.
-      * */
-      let {aboutText, questionAndAnswerObjList, lyricAndCommentObjList} = await page.evaluate(()=>{
-        let questionAndAnswerObjList: QuestionAndAnswer[] = []
-        let lyricAndCommentObjList: LyricAndComment[] = []
-        document.querySelectorAll('.jvutUp').forEach((lyricDOM)=>{
-          if(!lyricDOM){return}
-          let lyricId = lyricDOM.getAttribute('href').split('/')[1]
-          // @ts-ignore
-          let lyricText = lyricDOM.innerText
-          if(!isNaN(parseInt(lyricId))){
-            lyricAndCommentObjList.push({
-              lyric: lyricText,
-              comment: lyricId
-            })
-          } else {
-            console.error("error parse url error ")
-          }
-        })
-        // @ts-ignore
-        let answerObj = window.__PRELOADED_STATE__.entities.answers
-        // @ts-ignore
-        let questionsObj = window.__PRELOADED_STATE__.entities.questions;
-        Object.keys(questionsObj).forEach((questionId)=>{
-          const questionItem = questionsObj[questionId]
-          const question = questionItem.body
-          const answerId = questionItem.answer
-          const answerItem = answerObj[answerId]
-          const answer = answerItem.body.markdown
-          const questionAndAnswer: QuestionAndAnswer = {
-            answer,
-            question
-          }
-          questionAndAnswerObjList.push(questionAndAnswer)
-        })
+      let {aboutText, questionAndAnswerObjList, lyricAndCommentObjList} = await this.getCommentDataFromSongPage()
 
 
-        const aboutDOM = document.querySelector('[class*="SongDescription"] [class*="RichText__Container"]');
-        const aboutText = aboutDOM?.innerHTML || ''
 
-        return {aboutText, questionAndAnswerObjList, lyricAndCommentObjList}
-      })
-      let promiseList = []
-      lyricAndCommentObjList.forEach((lyricAndCommentObj)=>{
-        let promise = this.geniusLyricInfoProxy.getCommentOnBackgroundOfWordSegmentation(lyricAndCommentObj.comment)
-        promiseList.push(promise)
-      })
-      let lyricCommentList = await Promise.all(promiseList).then((responseList)=>{
-
-        return responseList
-
-      })
-      lyricAndCommentObjList.forEach((lyricAndCommentObj, index )=>{
-        lyricAndCommentObj.comment = lyricCommentList[index]
-      })
 
       console.log('aboutText', aboutText);
       console.log('answerMarkDownList', questionAndAnswerObjList);
       console.log('lyricAndCommentObjList', lyricAndCommentObjList);
+      return {aboutText, questionAndAnswerObjList, lyricAndCommentObjList}
 
 
     } catch (e){

@@ -15,7 +15,7 @@ export class SongCommentController {
 
   @Get(':externalId')
   async getSongComment(@Param('externalId') externalId){
-    await this.songCommentService.getComment(externalId)
-    return externalId
+    let {...obj} = await this.songCommentService.getComment(externalId)
+    return obj
   }
 }
