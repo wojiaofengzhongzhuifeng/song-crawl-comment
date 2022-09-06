@@ -6,11 +6,12 @@ import { SongCommentService } from './song-comment/song-comment.service';
 import { HttpModule } from "@nestjs/axios";
 import { SongMetaProxy } from "./song-comment/song-meta-proxy";
 import { SongCommentCrawler } from "./song-comment/song-comment-crawler";
+import { GeniusLyricInfoProxy } from "./song-comment/genius-lyric-info-proxy";
 
 
 @Module({
   imports: [HttpModule],
   controllers: [AppController, SongCommentController],
-  providers: [AppService, SongCommentService, SongMetaProxy, SongCommentCrawler],
+  providers: [AppService, SongCommentService, SongMetaProxy, SongCommentCrawler, GeniusLyricInfoProxy],
 })
 export class AppModule {}
