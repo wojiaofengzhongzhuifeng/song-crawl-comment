@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { FrontEndSongMeta } from "./types/song-meta";
+import { FrontEndSongMeta } from "../types/song-meta";
 import puppeteer, { Page, PageEmittedEvents } from "puppeteer";
 import { GeniusLyricInfoProxy } from "./genius-lyric-info-proxy";
 

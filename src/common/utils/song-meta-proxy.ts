@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { BackEndSongMeta, FrontEndSongMeta } from "./types/song-meta";
+import { BackEndSongMeta, FrontEndSongMeta } from "../types/song-meta";
 import { HttpService } from "@nestjs/axios";
 import { map, Observable } from "rxjs";
 import { AxiosResponse } from "axios";
