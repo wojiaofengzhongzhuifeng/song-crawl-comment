@@ -7,6 +7,7 @@ import { SongCommentCrawler } from "./common/utils/song-comment-crawler";
 import { GeniusLyricInfoProxy } from "./common/utils/genius-lyric-info-proxy";
 import { SongCommentSeedModule } from './song-comment-seed/song-comment-seed.module';
 import { TypeOrmModule } from "@nestjs/typeorm";
+import { SongCommentModule } from './song-comment/song-comment.module';
 
 @Module({
   imports: [
@@ -21,7 +22,8 @@ import { TypeOrmModule } from "@nestjs/typeorm";
       database: 'song-comment',
       autoLoadEntities: true,
       synchronize: true, // todo 生产环境设置为 false
-    })
+    }),
+    SongCommentModule
   ],
   controllers: [AppController],
   providers: [AppService, SongMetaProxy, SongCommentCrawler, GeniusLyricInfoProxy],
