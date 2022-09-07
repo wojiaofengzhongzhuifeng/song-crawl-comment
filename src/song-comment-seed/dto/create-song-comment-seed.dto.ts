@@ -1,1 +1,3 @@
-export class CreateSongCommentSeedDto {}
+export class CreateSongCommentSeedDto {
+  externalId: string;
+}

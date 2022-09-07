@@ -26,11 +26,14 @@
     "@nestjs/core": "^8.0.0",
     "@nestjs/mapped-types": "*",
     "@nestjs/platform-express": "^8.0.0",
+    "@nestjs/typeorm": "^9.0.1",
     "axios": "^0.27.2",
+    "mysql2": "^2.3.3",
     "puppeteer": "^16.2.0",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
-    "rxjs": "^7.2.0"
+    "rxjs": "^7.2.0",
+    "typeorm": "^0.3.9"
   },
   "devDependencies": {
     "@nestjs/cli": "^8.0.0",
