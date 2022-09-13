@@ -16,8 +16,18 @@ export class SongComment extends BaseEntity{
 
   @Column()
   externalId: string;
+
+  @Column({default: 'default'})
+  type: SongCommentType
 }
 export enum SongCommentSource{
   genius = "genius",
   youtube = "youtube",
+}
+// 只有爬取 genius 才有的数据类型
+export enum SongCommentType {
+  about = 'about',
+  lyric = 'lyric',
+  question = 'question',
+  default = "default"
 }

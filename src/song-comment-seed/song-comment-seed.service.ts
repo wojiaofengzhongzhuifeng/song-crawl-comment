@@ -6,7 +6,7 @@ import { SongCommentSeed, SongCommentSeedStatus } from "./entities/song-comment-
 import { Repository } from "typeorm";
 import { Interval } from "@nestjs/schedule";
 import { SongCommentCrawler } from "../common/utils/song-comment-crawler";
-import { SongCommentSource } from "../song-comment/entities/song-comment.entity";
+import { SongCommentSource, SongCommentType } from "../song-comment/entities/song-comment.entity";
 import { CreateSongCommentDto } from "../song-comment/dto/create-song-comment.dto";
 import { SongCommentService } from "../song-comment/song-comment.service";
 
@@ -83,6 +83,7 @@ export class SongCommentSeedService {
           source: SongCommentSource.genius,
           comment: geniusAboutComment,
           externalId,
+          type: SongCommentType.about,
         }
 
         await this.songCommentService.create(aboutSongCommentDTO)
@@ -97,6 +98,7 @@ export class SongCommentSeedService {
               comment: comment,
               extraComment: lyricAndComment.lyric,
               externalId,
+              type: SongCommentType.lyric
             }
             lyricSongCommentDTOList.push(createSongCommentDto)
           })
@@ -113,6 +115,7 @@ export class SongCommentSeedService {
             comment: questionAndAnswer.answer,
             extraComment: questionAndAnswer.question,
             externalId,
+            type: SongCommentType.question
           }
         })
         for (const lyricSongCommentDTO of questionSongCommentDTOList) {
