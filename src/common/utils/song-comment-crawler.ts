@@ -3,7 +3,7 @@ import { FrontEndSongMeta } from "../types/song-meta";
 import puppeteer, { Page, PageEmittedEvents } from "puppeteer";
 import { GeniusLyricInfoProxy } from "./genius-lyric-info-proxy";
 import { SongMetaProxy } from "./song-meta-proxy";
-
+import { LyricAndComment, QuestionAndAnswer } from "../types/common";
 
 // 核心类：使用这个类爬取歌曲 comment
 @Injectable()
@@ -28,7 +28,7 @@ export class SongCommentCrawler {
   async initChrome(){
     console.log("initChrome");
     const browser = await puppeteer.launch({
-      headless: false,   //有浏览器界面启动
+      headless: true,   //有浏览器界面启动
     });
     this.page = await browser.newPage();
     await this.htmlOnly(this.page)
@@ -75,7 +75,7 @@ export class SongCommentCrawler {
     await this.page.goto(matchSongHref);
   }
 
-  async getCommentDataFromSongPage(){
+  async getCommentDataFromSongPage(): Promise<{aboutText: string, questionAndAnswerObjList: QuestionAndAnswer[], lyricAndCommentObjList: LyricAndComment[]}>{
     console.log("getCommentDataFromSongPage");
     // 当前的 this.page 表示进入了歌曲详情页面
     // 爬取以下数据
@@ -95,7 +95,7 @@ export class SongCommentCrawler {
       let aboutText = ""
       document.querySelectorAll('.jvutUp').forEach((lyricDOM)=>{
         if(!lyricDOM){return}
-        let lyricId = lyricDOM.getAttribute('href').split('/')[1]
+        let lyricId: any = lyricDOM.getAttribute('href').split('/')[1]
         // @ts-ignore
         let lyricText = lyricDOM.innerText
         if(!isNaN(parseInt(lyricId))){

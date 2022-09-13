@@ -6,10 +6,12 @@ export class SongComment extends BaseEntity{
   @Column()
   source: SongCommentSource;
 
-  @Column()
+  @Column({
+    type: "text"
+  })
   comment: String;
 
-  @Column({default: ''})
+  @Column({type: "text"})
   extraComment: String;
 
   @Column()

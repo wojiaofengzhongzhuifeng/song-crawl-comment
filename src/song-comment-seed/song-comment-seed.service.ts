@@ -1,18 +1,22 @@
-import { Injectable } from '@nestjs/common';
-import { CreateSongCommentSeedDto } from './dto/create-song-comment-seed.dto';
-import { UpdateSongCommentSeedDto } from './dto/update-song-comment-seed.dto';
+import { Injectable } from "@nestjs/common";
+import { CreateSongCommentSeedDto } from "./dto/create-song-comment-seed.dto";
+import { UpdateSongCommentSeedDto } from "./dto/update-song-comment-seed.dto";
 import { InjectRepository } from "@nestjs/typeorm";
 import { SongCommentSeed, SongCommentSeedStatus } from "./entities/song-comment-seed.entity";
 import { Repository } from "typeorm";
-import { Cron, Interval } from "@nestjs/schedule";
+import { Interval } from "@nestjs/schedule";
 import { SongCommentCrawler } from "../common/utils/song-comment-crawler";
+import { SongCommentSource } from "../song-comment/entities/song-comment.entity";
+import { CreateSongCommentDto } from "../song-comment/dto/create-song-comment.dto";
+import { SongCommentService } from "../song-comment/song-comment.service";
 
 @Injectable()
 export class SongCommentSeedService {
   constructor(
     @InjectRepository(SongCommentSeed)
     private readonly songCommentSeedRepository: Repository<SongCommentSeed>,
-    private readonly SongCommentCrawler: SongCommentCrawler
+    private readonly songCommentCrawler: SongCommentCrawler,
+    private readonly songCommentService: SongCommentService,
   ) {}
 
   async create(createSongCommentSeedDto: CreateSongCommentSeedDto): Promise<SongCommentSeed> {
@@ -54,7 +58,7 @@ export class SongCommentSeedService {
 
 
   async test(externalId: string) {
-    const commentData = await this.SongCommentCrawler.getCommentList(externalId);
+    const commentData = await this.songCommentCrawler.getCommentList(externalId);
     console.log('commentData11111', commentData);
   }
 
@@ -68,11 +72,55 @@ export class SongCommentSeedService {
     await this.songCommentSeedRepository.update({externalId: externalId}, {status: SongCommentSeedStatus.IS_CRAWLING});
 
     try{
-      const commentData = await this.SongCommentCrawler.getCommentList(externalId);
+      const commentData = await this.songCommentCrawler.getCommentList(externalId);
       console.log('commentData', commentData);
       const geniusAboutComment = commentData.genius.aboutText
       const geniusLyricComment = commentData.genius.lyricAndCommentObjList
       const geniusQuestionComment = commentData.genius.questionAndAnswerObjList
+
+      if(geniusAboutComment){
+        const aboutSongCommentDTO: CreateSongCommentDto = {
+          source: SongCommentSource.genius,
+          comment: geniusAboutComment,
+          externalId,
+        }
+
+        await this.songCommentService.create(aboutSongCommentDTO)
+      }
+
+      if(geniusLyricComment.length !== 0){
+        const lyricSongCommentDTOList: CreateSongCommentDto[] = []
+        geniusLyricComment.map((lyricAndComment)=>{
+          lyricAndComment.comment.forEach((comment)=>{
+            const createSongCommentDto: CreateSongCommentDto = {
+              source: SongCommentSource.genius,
+              comment: comment,
+              extraComment: lyricAndComment.lyric,
+              externalId,
+            }
+            lyricSongCommentDTOList.push(createSongCommentDto)
+          })
+        })
+        for (const lyricSongCommentDTO of lyricSongCommentDTOList) {
+          await this.songCommentService.create(lyricSongCommentDTO)
+        }
+      }
+
+      if(geniusQuestionComment.length !== 0){
+        const questionSongCommentDTOList: CreateSongCommentDto[] = geniusQuestionComment.map((questionAndAnswer)=>{
+          return {
+            source: SongCommentSource.genius,
+            comment: questionAndAnswer.answer,
+            extraComment: questionAndAnswer.question,
+            externalId,
+          }
+        })
+        for (const lyricSongCommentDTO of questionSongCommentDTOList) {
+          await this.songCommentService.create(lyricSongCommentDTO)
+        }
+      }
+
+
     } catch (e){
       console.log("fdsafdsa", e);
       console.log("fdsafdsa", e.message ? e.message : "error");

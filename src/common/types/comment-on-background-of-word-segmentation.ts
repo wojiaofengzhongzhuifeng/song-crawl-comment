@@ -1,4 +1,4 @@
-interface CommentOnBackgroundOfWordSegmentation{
+export interface CommentOnBackgroundOfWordSegmentation{
   "meta": {
     "status": number // 200
   },

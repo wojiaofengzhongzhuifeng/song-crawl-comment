@@ -3,6 +3,7 @@ import { BackEndSongMeta, FrontEndSongMeta } from "../types/song-meta";
 import { HttpService } from "@nestjs/axios";
 import { map, Observable } from "rxjs";
 import { AxiosResponse } from "axios";
+import { CommentOnBackgroundOfWordSegmentation } from "../types/comment-on-background-of-word-segmentation";
 
 // 用于发起请求
 @Injectable()

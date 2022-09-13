@@ -8,5 +8,7 @@ import { SongComment } from "./entities/song-comment.entity";
   controllers: [SongCommentController],
   providers: [SongCommentService],
   imports: [TypeOrmModule.forFeature([SongComment])],
+  // song-comment-seed 需要使用 SongCommentService， 所以新增这个 exports
+  exports: [SongCommentService]
 })
 export class SongCommentModule {}

@@ -1,8 +1,8 @@
-interface QuestionAndAnswer{
+export interface QuestionAndAnswer{
   question: string
   answer: string
 }
-interface LyricAndComment{
+export interface LyricAndComment{
   lyric: string
-  comment: string
+  comment: string[]
 }

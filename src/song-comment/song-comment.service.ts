@@ -13,11 +13,15 @@ export class SongCommentService {
   ) {}
 
   create(createSongCommentDto: CreateSongCommentDto) {
+    const time = new Date();
+
     const songComment = new SongComment();
     songComment.source = createSongCommentDto.source;
     songComment.comment = createSongCommentDto.comment;
     songComment.extraComment = createSongCommentDto?.extraComment || "";
     songComment.externalId = createSongCommentDto.externalId;
+    songComment.creation = time;
+    songComment.modification = time;
     return this.songCommentRepository.save(songComment);
   }
 
