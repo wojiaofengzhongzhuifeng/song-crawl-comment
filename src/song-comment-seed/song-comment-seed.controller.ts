@@ -7,9 +7,11 @@ import { UpdateSongCommentSeedDto } from './dto/update-song-comment-seed.dto';
 export class SongCommentSeedController {
   constructor(private readonly songCommentSeedService: SongCommentSeedService) {}
 
-  @Get("/test")
-  test(){
-    return "jfdkslafjdklasjfkldjasl"
+  @Get(":id")
+  test(
+    @Param('id') id: string
+  ){
+    return this.songCommentSeedService.test(id)
   }
 
   @Post()

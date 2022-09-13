@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { FrontEndSongMeta } from "../types/song-meta";
 import puppeteer, { Page, PageEmittedEvents } from "puppeteer";
 import { GeniusLyricInfoProxy } from "./genius-lyric-info-proxy";
+import { SongMetaProxy } from "./song-meta-proxy";
 
 
 // 核心类：使用这个类爬取歌曲 comment
@@ -10,61 +11,19 @@ export class SongCommentCrawler {
 
   constructor(
     private readonly geniusLyricInfoProxy: GeniusLyricInfoProxy,
+    private readonly songMetaProxy: SongMetaProxy,
   ) {}
 
   page = null
 
-  async getCommentList(frontEndSongMeta: FrontEndSongMeta, externalId: string){
-    let {aboutText, questionAndAnswerObjList, lyricAndCommentObjList} = await this.getGeniusCommentListForTest(frontEndSongMeta)
+  async getCommentList(externalId: string){
+    // 1. 根据 youtube id 获取 meta 信息
+    let songMeta = await this.songMetaProxy.getMetaByYTBId(externalId)
+    let {aboutText, questionAndAnswerObjList, lyricAndCommentObjList} = await this.getGeniusCommentList(songMeta)
     this.getYTBCommentList(externalId)
     return {genius: {aboutText, questionAndAnswerObjList, lyricAndCommentObjList}}
   }
 
-  async getGeniusCommentList(frontEndSongMeta: FrontEndSongMeta){
-    try{
-      // 使用 puppeteer 库的无头浏览器打开 `https://genius.com/search?q=${spotifyalbum}` 专辑查找结果页面
-      const geniusSearchUrl = `https://genius.com/search?q=${frontEndSongMeta.spotifyAlbum}`
-      const browser = await puppeteer.launch({
-        headless: false,   //有浏览器界面启动
-      });
-      const page = await browser.newPage();
-      await page.setDefaultNavigationTimeout(0);
-      await page.goto(geniusSearchUrl, {
-        timeout: 1000000,
-      });
-
-      // 在上一步的页面中，寻找 「tracking-event="Search Result Tap"」的dom，取第一个 dom，获取 dom 的链接，进入这个链接
-      let albumHref = await page.evaluate(() => {
-        const albumHref = document.querySelectorAll('[tracking-event="Search Result Tap"]')[0].querySelector('a').getAttribute('href')
-        return albumHref
-      });
-      await page.goto(albumHref);
-
-      // 选择当前歌曲列表中最接近的歌曲名称，进入该歌曲页面
-      let matchSongHref = await page.evaluate(() => {
-        let matchSongHref = ''
-        let songDomList = document.querySelectorAll('album-tracklist-row')
-        songDomList.forEach((item)=>{
-          let songNameFromGenius = item.querySelector('h3').innerText
-          if(songNameFromGenius.includes(frontEndSongMeta.spotifySong)){
-            // @ts-ignore
-            matchSongHref = item.querySelector("h3").parentElement.href
-          }
-        })
-        return matchSongHref
-      });
-      await page.goto(matchSongHref);
-
-      //
-
-
-
-
-
-    } catch (e){
-      console.error(e);
-    }
-  }
 
   async initChrome(){
     console.log("initChrome");
@@ -185,28 +144,16 @@ export class SongCommentCrawler {
   }
 
 
-  async getGeniusCommentListForTest(frontEndSongMeta: FrontEndSongMeta){
-    try{
-      await this.initChrome()
-      await this.gotoPageSearchByAlbumName(frontEndSongMeta)
-      await this.goToMostMatchAlbumPage()
-      await this.gotoMostMatchSongPage(frontEndSongMeta)
+  async getGeniusCommentList(frontEndSongMeta: FrontEndSongMeta){
+    await this.initChrome()
+    await this.gotoPageSearchByAlbumName(frontEndSongMeta)
+    await this.goToMostMatchAlbumPage()
+    await this.gotoMostMatchSongPage(frontEndSongMeta)
 
-      // 正式进入歌曲页面
-      let {aboutText, questionAndAnswerObjList, lyricAndCommentObjList} = await this.getCommentDataFromSongPage()
+    // 正式进入歌曲页面
+    let {aboutText, questionAndAnswerObjList, lyricAndCommentObjList} = await this.getCommentDataFromSongPage()
 
-
-
-
-      console.log('aboutText', aboutText);
-      console.log('answerMarkDownList', questionAndAnswerObjList);
-      console.log('lyricAndCommentObjList', lyricAndCommentObjList);
-      return {aboutText, questionAndAnswerObjList, lyricAndCommentObjList}
-
-
-    } catch (e){
-      console.error(e);
-    }
+    return {aboutText, questionAndAnswerObjList, lyricAndCommentObjList}
   }
 
   // 对请求做一些过滤操作
