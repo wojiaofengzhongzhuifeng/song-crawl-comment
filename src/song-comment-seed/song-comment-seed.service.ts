@@ -58,8 +58,12 @@ export class SongCommentSeedService {
 
 
   async test(externalId: string) {
-    const commentData = await this.songCommentCrawler.getCommentList(externalId);
+    const commentData = await this.songCommentCrawler.getGeniusCommentListAndSaveYoutubeCommentToDB(externalId);
     console.log('commentData11111', commentData);
+  }
+
+  getAndSaveYoutubeCommentList(id: string){
+    this.songCommentCrawler.getAndSaveYoutubeCommentList(id);
   }
 
   @Interval(5000)
@@ -72,7 +76,7 @@ export class SongCommentSeedService {
     await this.songCommentSeedRepository.update({externalId: externalId}, {status: SongCommentSeedStatus.IS_CRAWLING});
 
     try{
-      const commentData = await this.songCommentCrawler.getCommentList(externalId);
+      const commentData = await this.songCommentCrawler.getGeniusCommentListAndSaveYoutubeCommentToDB(externalId);
       const geniusAboutComment = commentData.genius.aboutText
       const geniusLyricComment = commentData.genius.lyricAndCommentObjList
       const geniusQuestionComment = commentData.genius.questionAndAnswerObjList

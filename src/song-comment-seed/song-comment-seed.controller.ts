@@ -14,6 +14,13 @@ export class SongCommentSeedController {
     return this.songCommentSeedService.test(id)
   }
 
+  @Get("/youtube/:id")
+  testGetYoutubeCommentList(
+    @Param('id') id: string
+  ){
+    return this.songCommentSeedService.getAndSaveYoutubeCommentList(id)
+  }
+
   @Post()
   create(@Body() createSongCommentSeedDto: CreateSongCommentSeedDto) {
     return this.songCommentSeedService.create(createSongCommentSeedDto);
