@@ -33,6 +33,8 @@ export class SongCommentSeedService {
       songCommentSeed.creation = time;
       songCommentSeed.modification = time;
       songCommentSeed.crawlFaiReason = "";
+      songCommentSeed.geniusSongUrl = "";
+      songCommentSeed.geniusSearchUrl = "";
 
       return this.songCommentSeedRepository.save(songCommentSeed)
     } else {
@@ -161,5 +163,10 @@ export class SongCommentSeedService {
       const errorMessage = e.message ? e.message : "unknow error"
       await this.songCommentSeedRepository.update({externalId: externalId}, {crawlFaiReason: errorMessage, status: SongCommentSeedStatus.CRAWL_FAILURE});
     }
+  }
+
+  // 检查数据库中 geniusSongUrl 列的值是否存在 search 字符串 ，如果存在，说明有问题，需要将这个值 status 设置为 PENDING
+  @Interval(5000)
+  async pollToRefreshError(){
   }
 }
