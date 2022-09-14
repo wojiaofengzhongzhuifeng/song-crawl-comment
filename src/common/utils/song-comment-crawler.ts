@@ -18,8 +18,8 @@ export class SongCommentCrawler {
 
   page = null
 
-  async getGeniusCommentListAndSaveYoutubeCommentToDB(externalId: string){
-    await this.getAndSaveYoutubeCommentList(externalId)
+  async getMetaAndGetGeniusCommentList(externalId: string){
+    // await this.getAndSaveYoutubeCommentList(externalId)
     // 1. 根据 youtube id 获取 meta 信息
     let songMeta = await this.songMetaProxy.getMetaByYTBId(externalId)
     console.log("通过我们的 api 得到数据 meta 结果", JSON.stringify(songMeta));
@@ -49,14 +49,21 @@ export class SongCommentCrawler {
   async findMostMatchAlbumInPageSearchByAlbumName(){
     // 在上一步的页面中，寻找 「tracking-event="Search Result Tap"」的dom，取第一个 dom，获取 dom 的链接，进入这个链接
     return await this.page.evaluate(() => {
-      return document.querySelectorAll('[tracking-event="Search Result Tap"]')[0].querySelector('a').getAttribute('href')
+      let href = ""
+      let dom = document.querySelectorAll('[tracking-event="Search Result Tap"]')[0].querySelector('a')
+      if(dom){
+        href = dom.getAttribute('href')
+      }
+      return href
     })
   }
 
   async goToMostMatchAlbumPage(){
     let songHref = await this.findMostMatchAlbumInPageSearchByAlbumName()
     console.log(`第二步：进入最匹配的搜索结果页面${songHref}, 注意此页面可能是 album 的结果，也可能是 song 的结果`)
-    await this.page.goto(songHref);
+    if(songHref){
+      await this.page.goto(songHref);
+    }
   }
 
   async findMostMatchSongInAlbumPage(frontEndSongMeta){
@@ -116,9 +123,9 @@ export class SongCommentCrawler {
         }
       })
       // @ts-ignore
-      let answerObj = window.__PRELOADED_STATE__.entities.answers
+      let answerObj = window?.__PRELOADED_STATE__?.entities?.answers || null
       // @ts-ignore
-      let questionsObj = window.__PRELOADED_STATE__.entities.questions;
+      let questionsObj = window?.__PRELOADED_STATE__?.entities?.questions || null;
 
       if(questionsObj && answerObj){
         Object.keys(questionsObj).forEach((questionId)=>{
@@ -210,7 +217,8 @@ export class SongCommentCrawler {
   }
 
   // 调用 youtube 官方 SDK ，获取数据的同时将数据存储到数据库中
-  getAndSaveYoutubeCommentList(externalId: string){
-    return this.youtubeSdkProxy.getYoutubeComment(externalId)
+  async getAndSaveYoutubeCommentList(externalId: string) {
+    let result = await this.youtubeSdkProxy.getYoutubeComment(externalId)
+    return result
   }
 }

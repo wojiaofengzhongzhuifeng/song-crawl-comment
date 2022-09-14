@@ -18,7 +18,7 @@ export class SongCommentSeedController {
   testGetYoutubeCommentList(
     @Param('id') id: string
   ){
-    return this.songCommentSeedService.getAndSaveYoutubeCommentList(id)
+    return this.songCommentSeedService.getAndSaveYoutubeCommentListToDB(id)
   }
 
   @Post()

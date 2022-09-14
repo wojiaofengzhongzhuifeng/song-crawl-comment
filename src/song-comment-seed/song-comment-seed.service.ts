@@ -58,11 +58,11 @@ export class SongCommentSeedService {
 
 
   async test(externalId: string) {
-    const commentData = await this.songCommentCrawler.getGeniusCommentListAndSaveYoutubeCommentToDB(externalId);
+    const commentData = await this.songCommentCrawler.getMetaAndGetGeniusCommentList(externalId);
     console.log('commentData11111', commentData);
   }
 
-  async getAndSaveYoutubeCommentList(id: string) {
+  async getAndSaveYoutubeCommentListToDB(id: string) {
     let youtubeCommentList = await this.songCommentCrawler.getAndSaveYoutubeCommentList(id);
     console.log("service youtubeCommentList", youtubeCommentList);
 
@@ -95,7 +95,8 @@ export class SongCommentSeedService {
     console.log(`需要爬取数据${externalId}`);
     await this.songCommentSeedRepository.update({externalId: externalId}, {status: SongCommentSeedStatus.IS_CRAWLING});
     try{
-      const commentData = await this.songCommentCrawler.getGeniusCommentListAndSaveYoutubeCommentToDB(externalId);
+      await this.getAndSaveYoutubeCommentListToDB(externalId)
+      const commentData = await this.songCommentCrawler.getMetaAndGetGeniusCommentList(externalId);
       const geniusAboutComment = commentData.genius.aboutText
       const geniusLyricComment = commentData.genius.lyricAndCommentObjList
       const geniusQuestionComment = commentData.genius.questionAndAnswerObjList
