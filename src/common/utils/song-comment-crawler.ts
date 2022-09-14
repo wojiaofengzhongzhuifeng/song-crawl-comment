@@ -19,6 +19,7 @@ export class SongCommentCrawler {
   async getCommentList(externalId: string){
     // 1. 根据 youtube id 获取 meta 信息
     let songMeta = await this.songMetaProxy.getMetaByYTBId(externalId)
+    console.log("通过我们的 api 得到数据 meta 结果", JSON.stringify(songMeta));
     let {aboutText, questionAndAnswerObjList, lyricAndCommentObjList} = await this.getGeniusCommentList(songMeta)
     this.getYTBCommentList(externalId)
     return {genius: {aboutText, questionAndAnswerObjList, lyricAndCommentObjList}}
@@ -28,7 +29,7 @@ export class SongCommentCrawler {
   async initChrome(){
     console.log("initChrome");
     const browser = await puppeteer.launch({
-      headless: true,   //有浏览器界面启动
+      headless: false,   //有浏览器界面启动
     });
     this.page = await browser.newPage();
     await this.htmlOnly(this.page)
@@ -38,6 +39,7 @@ export class SongCommentCrawler {
   async gotoPageSearchByAlbumName(frontEndSongMeta: FrontEndSongMeta){
     console.log("gotoAlbumPage");
     const geniusSearchUrl = `https://genius.com/search?q=${frontEndSongMeta.spotifyAlbum}`
+    console.log(`第一步：进入${geniusSearchUrl}页面`)
     await this.page.goto(geniusSearchUrl, {
       timeout: 1000000,
     });
@@ -51,6 +53,7 @@ export class SongCommentCrawler {
 
   async goToMostMatchAlbumPage(){
     let songHref = await this.findMostMatchAlbumInPageSearchByAlbumName()
+    console.log(`第二步：进入最匹配的搜索结果页面${songHref}, 注意此页面可能是 album 的结果，也可能是 song 的结果`)
     await this.page.goto(songHref);
   }
 
@@ -72,7 +75,10 @@ export class SongCommentCrawler {
 
   async gotoMostMatchSongPage(frontEndSongMeta){
     let matchSongHref = await this.findMostMatchSongInAlbumPage(frontEndSongMeta)
-    await this.page.goto(matchSongHref);
+    console.log(`第三步：进入到最匹配的歌曲详情${matchSongHref}`)
+    if(matchSongHref){
+      await this.page.goto(matchSongHref);
+    }
   }
 
   async getCommentDataFromSongPage(): Promise<{aboutText: string, questionAndAnswerObjList: QuestionAndAnswer[], lyricAndCommentObjList: LyricAndComment[]}>{
@@ -111,18 +117,23 @@ export class SongCommentCrawler {
       let answerObj = window.__PRELOADED_STATE__.entities.answers
       // @ts-ignore
       let questionsObj = window.__PRELOADED_STATE__.entities.questions;
-      Object.keys(questionsObj).forEach((questionId)=>{
-        const questionItem = questionsObj[questionId]
-        const question = questionItem.body
-        const answerId = questionItem.answer
-        const answerItem = answerObj[answerId]
-        const answer = answerItem.body.markdown
-        const questionAndAnswer: QuestionAndAnswer = {
-          answer,
-          question
-        }
-        questionAndAnswerObjList.push(questionAndAnswer)
-      })
+
+      if(questionsObj && answerObj){
+        Object.keys(questionsObj).forEach((questionId)=>{
+          const questionItem = questionsObj[questionId]
+          const question = questionItem.body
+          const answerId = questionItem.answer
+          const answerItem = answerObj[answerId]
+          const answer = answerItem.body.markdown
+          const questionAndAnswer: QuestionAndAnswer = {
+            answer,
+            question
+          }
+          questionAndAnswerObjList.push(questionAndAnswer)
+        })
+      }
+
+
 
       const aboutDOM = document.querySelector('[class*="SongDescription"] [class*="RichText__Container"]');
       aboutText = aboutDOM?.innerHTML || ''

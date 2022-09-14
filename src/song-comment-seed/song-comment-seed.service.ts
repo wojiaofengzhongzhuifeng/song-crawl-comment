@@ -73,7 +73,6 @@ export class SongCommentSeedService {
 
     try{
       const commentData = await this.songCommentCrawler.getCommentList(externalId);
-      console.log('commentData', commentData);
       const geniusAboutComment = commentData.genius.aboutText
       const geniusLyricComment = commentData.genius.lyricAndCommentObjList
       const geniusQuestionComment = commentData.genius.questionAndAnswerObjList
