@@ -9,6 +9,7 @@ import { SongCommentSeedModule } from './song-comment-seed/song-comment-seed.mod
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { SongCommentModule } from './song-comment/song-comment.module';
 import { ScheduleModule } from "@nestjs/schedule";
+import { YoutubeSdkProxy } from "./common/utils/youtube-sdk-proxy";
 
 @Module({
   imports: [
@@ -28,6 +29,6 @@ import { ScheduleModule } from "@nestjs/schedule";
     ScheduleModule.forRoot()
   ],
   controllers: [AppController],
-  providers: [AppService, SongMetaProxy, SongCommentCrawler, GeniusLyricInfoProxy],
+  providers: [AppService, SongMetaProxy, SongCommentCrawler, GeniusLyricInfoProxy, YoutubeSdkProxy],
 })
 export class AppModule {}

@@ -62,8 +62,27 @@ export class SongCommentSeedService {
     console.log('commentData11111', commentData);
   }
 
-  getAndSaveYoutubeCommentList(id: string){
-    this.songCommentCrawler.getAndSaveYoutubeCommentList(id);
+  async getAndSaveYoutubeCommentList(id: string) {
+    let youtubeCommentList = await this.songCommentCrawler.getAndSaveYoutubeCommentList(id);
+    console.log("service youtubeCommentList", youtubeCommentList);
+
+    if(youtubeCommentList.length !== 0){
+      const youtubeLyricSongCommentDTOList: CreateSongCommentDto[] = []
+      youtubeCommentList.map((youtubeComment)=>{
+        const createSongCommentDto: CreateSongCommentDto = {
+          source: SongCommentSource.youtube,
+          comment: youtubeComment,
+          extraComment: "",
+          externalId: id,
+          type: SongCommentType.default
+        }
+        youtubeLyricSongCommentDTOList.push(createSongCommentDto)
+      })
+      for (const youtubeLyricSongCommentDTO of youtubeLyricSongCommentDTOList) {
+        await this.songCommentService.create(youtubeLyricSongCommentDTO)
+      }
+    }
+
   }
 
   @Interval(5000)

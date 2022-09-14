@@ -10,10 +10,11 @@ import { HttpModule, HttpService } from "@nestjs/axios";
 import { SongCommentController } from "../song-comment/song-comment.controller";
 import { SongCommentModule } from "../song-comment/song-comment.module";
 import { SongCommentService } from "../song-comment/song-comment.service";
+import { YoutubeSdkProxy } from "../common/utils/youtube-sdk-proxy";
 
 @Module({
   imports: [TypeOrmModule.forFeature([SongCommentSeed]), HttpModule, SongCommentModule],
   controllers: [SongCommentSeedController],
-  providers: [SongCommentSeedService, SongMetaProxy, SongCommentCrawler, GeniusLyricInfoProxy, ]
+  providers: [SongCommentSeedService, SongMetaProxy, SongCommentCrawler, GeniusLyricInfoProxy,YoutubeSdkProxy ]
 })
 export class SongCommentSeedModule {}

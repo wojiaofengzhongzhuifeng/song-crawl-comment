@@ -4,6 +4,7 @@ import puppeteer, { Page, PageEmittedEvents } from "puppeteer";
 import { GeniusLyricInfoProxy } from "./genius-lyric-info-proxy";
 import { SongMetaProxy } from "./song-meta-proxy";
 import { LyricAndComment, QuestionAndAnswer } from "../types/common";
+import { YoutubeSdkProxy } from "./youtube-sdk-proxy";
 
 // 核心类：使用这个类爬取歌曲 comment
 @Injectable()
@@ -12,6 +13,7 @@ export class SongCommentCrawler {
   constructor(
     private readonly geniusLyricInfoProxy: GeniusLyricInfoProxy,
     private readonly songMetaProxy: SongMetaProxy,
+    private readonly youtubeSdkProxy: YoutubeSdkProxy
   ) {}
 
   page = null
@@ -209,6 +211,6 @@ export class SongCommentCrawler {
 
   // 调用 youtube 官方 SDK ，获取数据的同时将数据存储到数据库中
   getAndSaveYoutubeCommentList(externalId: string){
-    console.log("getAndSaveYoutubeCommentList", externalId)
+    return this.youtubeSdkProxy.getYoutubeComment(externalId)
   }
 }
