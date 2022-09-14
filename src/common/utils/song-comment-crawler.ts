@@ -19,11 +19,11 @@ export class SongCommentCrawler {
   page = null
 
   async getGeniusCommentListAndSaveYoutubeCommentToDB(externalId: string){
+    await this.getAndSaveYoutubeCommentList(externalId)
     // 1. 根据 youtube id 获取 meta 信息
     let songMeta = await this.songMetaProxy.getMetaByYTBId(externalId)
     console.log("通过我们的 api 得到数据 meta 结果", JSON.stringify(songMeta));
     let {aboutText, questionAndAnswerObjList, lyricAndCommentObjList} = await this.getGeniusCommentList(songMeta)
-    this.getAndSaveYoutubeCommentList(externalId)
     return {genius: {aboutText, questionAndAnswerObjList, lyricAndCommentObjList}}
   }
 

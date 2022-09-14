@@ -87,13 +87,13 @@ export class SongCommentSeedService {
 
   @Interval(5000)
   async pollToGetPendingSongCommentSeedData() {
+    const haveIsCrawlingData = await this.songCommentSeedRepository.findOneBy({status: SongCommentSeedStatus.IS_CRAWLING})
+    if(haveIsCrawlingData){return}
     const pendSongCommentSeedData = await this.songCommentSeedRepository.findOneBy({ status: SongCommentSeedStatus.PENDING });
     if(!pendSongCommentSeedData){return}
     const externalId = pendSongCommentSeedData.externalId;
     console.log(`需要爬取数据${externalId}`);
-
     await this.songCommentSeedRepository.update({externalId: externalId}, {status: SongCommentSeedStatus.IS_CRAWLING});
-
     try{
       const commentData = await this.songCommentCrawler.getGeniusCommentListAndSaveYoutubeCommentToDB(externalId);
       const geniusAboutComment = commentData.genius.aboutText
@@ -145,6 +145,7 @@ export class SongCommentSeedService {
         }
       }
 
+      await this.songCommentSeedRepository.update({externalId: externalId}, {status: SongCommentSeedStatus.CRAWL_SUCCESS});
 
     } catch (e){
       console.log("fdsafdsa", e);
