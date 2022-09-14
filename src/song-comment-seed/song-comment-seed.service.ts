@@ -48,8 +48,9 @@ export class SongCommentSeedService {
 
   }
 
-  update(id: number, updateSongCommentSeedDto: UpdateSongCommentSeedDto) {
-    return `This action updates a #${id} songCommentSeed`;
+  async update(externalId: string, updateSongCommentSeedDto: UpdateSongCommentSeedDto) {
+    await this.songCommentSeedRepository.update({ externalId, }, updateSongCommentSeedDto)
+    return "update";
   }
 
   remove(id: number) {
@@ -91,6 +92,7 @@ export class SongCommentSeedService {
     if(haveIsCrawlingData){return}
     const pendSongCommentSeedData = await this.songCommentSeedRepository.findOneBy({ status: SongCommentSeedStatus.PENDING });
     if(!pendSongCommentSeedData){return}
+
     const externalId = pendSongCommentSeedData.externalId;
     console.log(`需要爬取数据${externalId}`);
     await this.songCommentSeedRepository.update({externalId: externalId}, {status: SongCommentSeedStatus.IS_CRAWLING});
@@ -100,6 +102,10 @@ export class SongCommentSeedService {
       const geniusAboutComment = commentData.genius.aboutText
       const geniusLyricComment = commentData.genius.lyricAndCommentObjList
       const geniusQuestionComment = commentData.genius.questionAndAnswerObjList
+
+      const {geniusSearchUrl, geniusSongUrl} = commentData.songCommentSeed
+
+      await this.songCommentSeedRepository.update({ externalId, }, {geniusSearchUrl, geniusSongUrl})
 
       if(geniusAboutComment){
         const aboutSongCommentDTO: CreateSongCommentDto = {
@@ -147,6 +153,7 @@ export class SongCommentSeedService {
       }
 
       await this.songCommentSeedRepository.update({externalId: externalId}, {status: SongCommentSeedStatus.CRAWL_SUCCESS});
+      console.log(`爬取评论结束： ${externalId}`)
 
     } catch (e){
       console.log("fdsafdsa", e);

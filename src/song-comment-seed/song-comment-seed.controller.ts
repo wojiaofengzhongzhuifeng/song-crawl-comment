@@ -36,10 +36,10 @@ export class SongCommentSeedController {
     return this.songCommentSeedService.findOne(+id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateSongCommentSeedDto: UpdateSongCommentSeedDto) {
-    return this.songCommentSeedService.update(+id, updateSongCommentSeedDto);
-  }
+  // @Patch(':id')
+  // update(@Param('id') id: string, @Body() updateSongCommentSeedDto: UpdateSongCommentSeedDto) {
+  //   return this.songCommentSeedService.update(+id, updateSongCommentSeedDto);
+  // }
 
   @Delete(':id')
   remove(@Param('id') id: string) {

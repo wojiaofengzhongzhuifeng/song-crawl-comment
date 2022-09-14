@@ -10,6 +10,8 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 import { SongCommentModule } from './song-comment/song-comment.module';
 import { ScheduleModule } from "@nestjs/schedule";
 import { YoutubeSdkProxy } from "./common/utils/youtube-sdk-proxy";
+import { Repository } from "typeorm";
+import { SongCommentSeed } from "./song-comment-seed/entities/song-comment-seed.entity";
 
 @Module({
   imports: [

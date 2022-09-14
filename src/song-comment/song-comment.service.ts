@@ -22,6 +22,7 @@ export class SongCommentService {
     songComment.externalId = createSongCommentDto.externalId;
     songComment.creation = time;
     songComment.modification = time;
+    songComment.type = createSongCommentDto.type;
     return this.songCommentRepository.save(songComment);
   }
 

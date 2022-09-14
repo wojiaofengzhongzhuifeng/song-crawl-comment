@@ -1,4 +1,4 @@
 import { PartialType } from '@nestjs/mapped-types';
-import { CreateSongCommentSeedDto } from './create-song-comment-seed.dto';
+import { SongCommentSeed } from '../entities/song-comment-seed.entity';
 
-export class UpdateSongCommentSeedDto extends PartialType(CreateSongCommentSeedDto) {}
+export class UpdateSongCommentSeedDto extends PartialType(SongCommentSeed) {}

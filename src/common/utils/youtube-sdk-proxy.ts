@@ -11,7 +11,7 @@ export class YoutubeSdkProxy {
   constructor(private readonly httpService: HttpService) {}
 
   async getYoutubeComment(yid: string): Promise<string[]>{
-    let requestUrl = `https://youtube.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=${yid}&key=${youtubeSDKAppKey}&maxResults=5&order=relevance`
+    let requestUrl = `https://youtube.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=${yid}&key=${youtubeSDKAppKey}&maxResults=100&order=relevance`
     const response: AxiosResponse<YoutubeCommentResponse> = await this.httpService.axiosRef.get(requestUrl)
     const commentList = []
     try{
