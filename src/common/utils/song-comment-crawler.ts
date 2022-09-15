@@ -59,6 +59,9 @@ export class SongCommentCrawler {
   async findMostMatchAlbumInPageSearchByAlbumName(){
     // 在上一步的页面中，寻找 「tracking-event="Search Result Tap"」的dom，取第一个 dom，获取 dom 的链接，进入这个链接
     return await this.page.evaluate(() => {
+
+      // todo 如果没有查询结果，需要抛出异常
+
       let href = ""
       let dom = document.querySelectorAll('[tracking-event="Search Result Tap"]')?.[0]?.querySelector('a') || null
       if(dom){

@@ -166,7 +166,32 @@ export class SongCommentSeedService {
   }
 
   // 检查数据库中 geniusSongUrl 列的值是否存在 search 字符串 ，如果存在，说明有问题，需要将这个值 status 设置为 PENDING
-  @Interval(5000)
+  @Interval(10000)
   async pollToRefreshError(){
+    const sql = `SELECT * FROM song_comment_seed WHERE STATUS = "CRAWL_SUCCESS" AND geniusSongUrl LIKE '%search?q=%' limit 1`
+    const haveProblemSongDataList = await this.songCommentSeedRepository.query(sql);
+
+
+    if(haveProblemSongDataList.length === 0){return}
+    const matchHaveProblemSongData = haveProblemSongDataList[0]
+    const externalId = matchHaveProblemSongData.externalId
+
+    await this.songCommentService.remove(externalId)
+    await this.songCommentSeedRepository.update({externalId}, {status: SongCommentSeedStatus.PENDING})
+  }
+
+  // 检查数据库中 status === failure , 将其转化为 pending
+  // @Interval(10000)
+  async pollToRefreshFailureData(){
+    const sql = `SELECT * FROM song_comment_seed WHERE STATUS = "CRAWL_FAILURE" limit 1`
+    const failureSongDataList = await this.songCommentSeedRepository.query(sql);
+
+
+    if(failureSongDataList.length === 0){return}
+    const matchHaveProblemSongData = failureSongDataList[0]
+    const externalId = matchHaveProblemSongData.externalId
+
+    await this.songCommentService.remove(externalId)
+    await this.songCommentSeedRepository.update({externalId}, {status: SongCommentSeedStatus.PENDING})
   }
 }

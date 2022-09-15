@@ -27,8 +27,8 @@ export class SongCommentController {
     return this.songCommentService.update(+id, updateSongCommentDto);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.songCommentService.remove(+id);
-  }
+  // @Delete(':id')
+  // remove(@Param('id') id: string) {
+  //   return this.songCommentService.remove(+id);
+  // }
 }

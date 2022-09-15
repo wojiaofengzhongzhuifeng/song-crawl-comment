@@ -38,7 +38,8 @@ export class SongCommentService {
     return `This action updates a #${id} songComment`;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} songComment`;
+  remove(externalId: string) {
+    const deleteSQL = `DELETE FROM song_comment WHERE externalId = "${externalId}";`
+    return this.songCommentRepository.query(deleteSQL)
   }
 }
